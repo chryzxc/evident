@@ -1,0 +1,32 @@
+# dependencies
+node_modules
+
+# build output
+dist
+build
+*.tsbuildinfo
+
+# turbo
+.turbo
+
+# local planning and tooling artifacts
+plan.md
+.codegraph/
+.omo/
+.opencode/
+
+# evident runtime artifacts
+.evident
+
+# coverage
+coverage
+
+# os / editor
+.DS_Store
+.idea
+.vscode/*
+!.vscode/extensions.json
+
+# logs
+*.log
+npm-debug.log*
