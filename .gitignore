@@ -11,7 +11,7 @@ build
 
 # local planning and tooling artifacts
 plan.md
-.codegraph/
+.codegraph
 .omo/
 .opencode/
 
