@@ -1,10 +1,9 @@
 import { Command } from 'commander';
-import { scanRepository } from '@evident/core';
-import { createAdapters, runAllAdapters, type AdapterContext } from '@evident/adapters';
 import { terminalReporter } from '@evident/reporters';
 import type { ScanOptions } from '@evident/types';
 import { split } from './options.js';
 import { handleError } from './errors.js';
+import { runConfiguredScan } from './run-scan.js';
 
 export function createScanCommand(): Command {
   const cmd = new Command('scan')
@@ -17,6 +16,7 @@ export function createScanCommand(): Command {
     .option('--fail-on <severities>', 'Blocking severity level', split)
     .option('--diff', 'Compute diff against a base')
     .option('--base <ref>', 'Baseline git ref for diff mode')
+    .option('--new-only', 'Only fail for findings absent from a baseline')
     .option('--no-ai', 'Disable AI explanations')
     .option('--offline', 'Disable network access')
     .option('--changed-only', 'Only scan changed files')
@@ -34,7 +34,9 @@ export function createScanCommand(): Command {
           scanners: opts.scanner,
           formats: opts.format,
           outputDirectory: opts.output,
-          failOn: opts.failOn ? { severity: opts.failOn, newFindingsOnly: Boolean(opts.diff) } : undefined,
+          failOn: opts.failOn
+            ? { severity: opts.failOn, newFindingsOnly: Boolean(opts.diff || opts.newOnly) }
+            : undefined,
           base: opts.base,
           ci: opts.ci,
           offline: opts.offline,
@@ -46,16 +48,7 @@ export function createScanCommand(): Command {
         if (opts.nativeOnly) options.mode = 'native-only';
         if (opts.changedOnly) options.mode = 'changed-only';
 
-        const hooks = !opts.nativeOnly
-          ? {
-              runAdapters: async (ctx: AdapterContext) => {
-                const adapters = createAdapters(ctx.config);
-                return runAllAdapters(adapters, ctx);
-              },
-            }
-          : {};
-
-        const result = await scanRepository(options, hooks);
+        const result = await runConfiguredScan(options);
 
         const terminal = terminalReporter.render(result);
         process.stdout.write(terminal + '\n');

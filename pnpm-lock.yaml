@@ -47,6 +47,9 @@ importers:
       '@evident/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@evident/regression':
+        specifier: workspace:*
+        version: link:../../packages/regression
       '@evident/reporters':
         specifier: workspace:*
         version: link:../../packages/reporters

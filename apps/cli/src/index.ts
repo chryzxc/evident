@@ -3,6 +3,9 @@ import pc from 'picocolors';
 import { createScanCommand } from './commands/scan.js';
 import { createDoctorCommand } from './commands/doctor.js';
 import { createInitCommand } from './commands/init.js';
+import { createBaselineCommand } from './commands/baseline.js';
+import { createDiffCommand } from './commands/diff.js';
+import { createEvidenceCommand } from './commands/evidence.js';
 
 const program = new Command();
 
@@ -11,6 +14,9 @@ program.name('evident').description('Developer-first repository intelligence and
 program.addCommand(createScanCommand());
 program.addCommand(createDoctorCommand());
 program.addCommand(createInitCommand());
+program.addCommand(createBaselineCommand());
+program.addCommand(createDiffCommand());
+program.addCommand(createEvidenceCommand());
 
 program.exitOverride();
 

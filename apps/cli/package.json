@@ -19,6 +19,7 @@
     "@evident/adapters": "workspace:*",
     "@evident/config": "workspace:*",
     "@evident/core": "workspace:*",
+    "@evident/regression": "workspace:*",
     "@evident/reporters": "workspace:*",
     "@evident/repository": "workspace:*",
     "@evident/types": "workspace:*",

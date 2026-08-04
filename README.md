@@ -115,6 +115,7 @@ Supported options:
 | `--offline` | Request offline-compatible adapter behavior. |
 | `--changed-only` | Reserved for changed-file scanning workflows. |
 | `--base <ref>` | Enables baseline comparison when a local baseline exists. |
+| `--new-only` | Apply the severity policy only to baseline-new findings. |
 | `--timeout <seconds>` | Per-scanner process timeout. |
 | `--ci` | Enables non-interactive CI behavior. |
 | `--verbose` / `--quiet` | Control scan logging. |
@@ -126,6 +127,26 @@ detection without modifying the repository.
 
 ```bash
 evident doctor
+```
+
+### `evident evidence`
+
+Evaluates technical evidence for a framework. The result is limited to technical
+evidence and does not certify compliance.
+
+```bash
+evident evidence --framework soc2 --native-only
+evident evidence --framework soc2 --format json
+```
+
+### `evident baseline` and `evident diff`
+
+Create a fingerprint-only baseline, then compare subsequent scans against it.
+
+```bash
+evident baseline create --native-only
+evident baseline compare --native-only
+evident diff --native-only --fail-on high
 ```
 
 ## Configuration
