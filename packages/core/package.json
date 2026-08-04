@@ -31,7 +31,6 @@
     "@evident/reporters": "workspace:*",
     "@evident/repository": "workspace:*",
     "@evident/rules": "workspace:*",
-    "@evident/rules": "workspace:*",
     "@evident/types": "workspace:*",
     "p-limit": "^6.1.0"
   }

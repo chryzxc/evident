@@ -31,8 +31,20 @@ export const htmlReporter: Reporter = {
     const rows = findings
       .map(
         (f) =>
-          `<tr class="${sevClass(f.severity)}"><td>${esc(f.id)}</td><td class="sev sev-${sevClass(f.severity)}">${esc(f.severity)}</td><td>${esc(f.title)}</td><td>${esc(f.category)}</td><td>${f.sources.map((s) => esc(s.tool)).join(', ')}</td></tr>`,
+          `<tr class="${sevClass(f.severity)}"><td>${esc(f.id)}</td><td class="sev sev-${sevClass(f.severity)}">${esc(f.severity)}</td><td><strong>${esc(f.title)}</strong><br><small>${esc(f.description)}</small></td><td>${esc(f.category)}</td><td>${esc(f.locations[0]?.path ?? 'repository')}${f.locations[0]?.lineStart ? `:${f.locations[0].lineStart}` : ''}</td><td>${f.sources.map((s) => esc(s.tool)).join(', ')}</td></tr>`,
       )
+      .join('\n');
+
+    const controlRows = result.controls
+      .map(
+        (control) =>
+          `<tr><td>${esc(control.framework.toUpperCase())}</td><td>${esc(control.controlId)}</td><td>${esc(control.status)}</td><td>${control.findingIds.length}</td><td>${control.evidenceIds.length}</td></tr>`,
+      )
+      .join('\n');
+
+    const evidenceRows = result.evidence
+      .map(
+        (evidence) => `<li><strong>${esc(evidence.type)}</strong> ${esc(evidence.path ?? evidence.title)}</li>`)
       .join('\n');
 
     return `<!DOCTYPE html>
@@ -61,9 +73,18 @@ tr.critical{background:#fef2f2}tr.high{background:#fff7ed}tr.medium{background:#
   <div><span class="label">Findings</span><br><span class="value">${result.findings.length}</span></div>
   <div><span class="label">Exit</span><br><span class="value">${result.exitCode}</span></div>
 </div>
-<table><thead><tr><th>ID</th><th>Severity</th><th>Title</th><th>Category</th><th>Sources</th></tr></thead><tbody>
-${rows || '<tr><td colspan="5">No findings</td></tr>'}
+<h2>Findings</h2>
+<table><thead><tr><th>ID</th><th>Severity</th><th>Finding</th><th>Category</th><th>Location</th><th>Sources</th></tr></thead><tbody>
+${rows || '<tr><td colspan="6">No findings</td></tr>'}
 </tbody></table>
+<h2>Scanner Coverage</h2>
+<p>${result.coverage.complete ? 'Complete' : 'Incomplete'}${result.coverage.missingTools.length ? `; unavailable: ${esc(result.coverage.missingTools.join(', '))}` : ''}</p>
+<h2>Technical Control Evaluations</h2>
+<table><thead><tr><th>Framework</th><th>Control</th><th>Status</th><th>Findings</th><th>Evidence</th></tr></thead><tbody>
+${controlRows || '<tr><td colspan="5">No framework evaluation requested</td></tr>'}
+</tbody></table>
+<h2>Evidence</h2>
+<ul>${evidenceRows || '<li>No technical evidence discovered</li>'}</ul>
 <div class="footer">Generated at ${esc(result.generatedAt)} · Profiles: ${esc(result.profiles.join(', '))} · ${result.durationMs}ms</div>
 </body></html>`;
   },

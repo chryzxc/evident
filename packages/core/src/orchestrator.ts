@@ -11,7 +11,7 @@ import type {
 } from '@evident/types';
 import type { RegressionItem } from '@evident/types';
 import { deduplicate } from '@evident/deduplicator';
-import { governanceRules, cicdRules, runRules } from '@evident/rules';
+import { governanceRules, cicdRules, applicationSecurityRules, runRules } from '@evident/rules';
 import { discoverEvidence } from '@evident/evidence';
 import { evaluateControls } from '@evident/controls';
 import { loadBaseline, classifyFindings } from '@evident/regression';
@@ -29,7 +29,11 @@ export interface ScanHooks {
 export const DEFAULT_HOOKS: ScanHooks = {
   runAdapters: async () => ({ adapterRuns: [], findings: [] }),
   runNativeRules: async (ctx) => {
-    return runRules(ctx.repository, [...governanceRules, ...cicdRules]);
+    return runRules(ctx.repository, [
+      ...governanceRules,
+      ...cicdRules,
+      ...applicationSecurityRules,
+    ]);
   },
 };
 
@@ -53,6 +57,18 @@ export async function scanRepository(
   });
 
   if (options.profiles) config = { ...config, profiles: options.profiles };
+  if (options.frameworks) config = { ...config, frameworks: options.frameworks };
+  if (!options.frameworks) {
+    const profileFrameworks = config.profiles.filter((profile) =>
+      ['soc2', 'hipaa', 'owasp'].includes(profile.toLowerCase()),
+    );
+    if (profileFrameworks.length > 0) {
+      config = {
+        ...config,
+        frameworks: [...new Set([...config.frameworks, ...profileFrameworks])],
+      };
+    }
+  }
   if (options.formats) {
     config = {
       ...config,
@@ -130,15 +146,12 @@ export async function scanRepository(
 
   const evidence = await discoverEvidence(repository);
   const controls = config.frameworks.flatMap((fw) =>
-    evaluateControls(
-      findings.map((f) => f.id),
-      fw,
-    ),
+    evaluateControls(findings, evidence, fw),
   );
 
   let regression = [] as RegressionItem[];
   if (options.base) {
-    const baseline = await loadBaseline('.evident');
+    const baseline = await loadBaseline(join(repository.root, '.evident'));
     regression = classifyFindings(findings, baseline);
   }
 

@@ -1,4 +1,4 @@
-import type { ControlEvaluation } from '@evident/types';
+import type { ControlEvaluation, EvidenceReference, EvidentFinding } from '@evident/types';
 import { SOC2_CONTROLS, type FrameworkControl } from './soc2.js';
 
 const CATEGORY_TO_CONTROLS: Record<string, string[]> = {
@@ -12,22 +12,42 @@ const CATEGORY_TO_CONTROLS: Record<string, string[]> = {
 };
 
 export function evaluateControls(
-  findingIds: string[],
+  findings: EvidentFinding[],
+  evidence: EvidenceReference[],
   framework: string,
 ): ControlEvaluation[] {
   const packs: Record<string, FrameworkControl[]> = { soc2: SOC2_CONTROLS };
   const controls = packs[framework] ?? [];
-  return controls.map((ctrl) => ({
-    framework,
-    controlId: ctrl.id,
-    controlTitle: ctrl.title,
-    status: findingIds.length > 0 ? 'TECHNICAL_EVIDENCE_FOUND' : 'NOT_EVALUATED',
-    evidenceIds: [],
-    findingIds,
-    limitations: ctrl.mappings.flatMap((m) => m.limitations),
-  }));
+  return controls.map((ctrl) => {
+    const relevantFindings = findings.filter((finding) =>
+      mapCategoryToControlIds(finding.category).includes(ctrl.id),
+    );
+    const relevantEvidence = evidence.filter((item) => supportsControl(item, ctrl.id));
+
+    return {
+      framework,
+      controlId: ctrl.id,
+      controlTitle: ctrl.title,
+      status: relevantFindings.length > 0
+        ? 'TECHNICAL_GAP'
+        : relevantEvidence.length > 0
+          ? 'TECHNICAL_EVIDENCE_FOUND'
+          : 'MANUAL_EVIDENCE_REQUIRED',
+      evidenceIds: relevantEvidence.map((item) => item.id),
+      findingIds: relevantFindings.map((finding) => finding.id),
+      limitations: ctrl.mappings.flatMap((mapping) => mapping.limitations),
+    };
+  });
 }
 
 export function mapCategoryToControlIds(category: string): string[] {
   return CATEGORY_TO_CONTROLS[category] ?? [];
+}
+
+function supportsControl(evidence: EvidenceReference, controlId: string): boolean {
+  if (controlId === 'CC7.2' || controlId === 'CC8.1') return evidence.type === 'WORKFLOW';
+  if (controlId === 'CC7.4') return evidence.path === 'SECURITY.md';
+  if (controlId === 'PI1.4') return evidence.type === 'SCANNER_REPORT';
+  if (controlId === 'CC6.2') return evidence.type === 'SOURCE_CODE';
+  return false;
 }

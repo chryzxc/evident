@@ -62,10 +62,39 @@ export const terminalReporter: Reporter = {
       }
     }
 
+    const actionable = result.findings
+      .filter((finding) => finding.status === 'OPEN')
+      .slice(0, 10);
+    if (actionable.length > 0) {
+      lines.push('');
+      lines.push(pc.bold('Top findings:'));
+      for (const finding of actionable) {
+        const location = finding.locations[0];
+        const sourceTools = finding.sources.map((source) => source.tool).join(', ');
+        lines.push(
+          `  ${severityColor[finding.severity](finding.severity)} ${finding.title}`,
+        );
+        lines.push(
+          pc.dim(
+            `    ${location?.path ?? 'repository'}${location?.lineStart ? `:${location.lineStart}` : ''} · ${sourceTools || 'Evident'}`,
+          ),
+        );
+        lines.push(pc.dim(`    ${finding.description}`));
+      }
+    }
+
+    if (result.controls.length > 0) {
+      lines.push('');
+      lines.push(pc.bold('Technical control evaluations:'));
+      for (const control of result.controls) {
+        lines.push(`  ${control.framework.toUpperCase()} ${control.controlId}: ${control.status}`);
+      }
+    }
+
     const blocking = result.findings.filter((f) => f.status === 'OPEN').length;
     lines.push('');
     lines.push(pc.dim(`Profiles: ${result.profiles.join(', ') || 'none'}`));
-    lines.push(pc.dim(`Duration: ${result.durationMs}ms · Findings: ${counts.total} · Blocking: ${blocking}`));
+    lines.push(pc.dim(`Duration: ${result.durationMs}ms · Findings: ${counts.total} · Open: ${blocking} · Evidence: ${result.evidence.length}`));
 
     if (result.exitCode !== 0) {
       lines.push(pc.red(`Exit code: ${result.exitCode}`));

@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { NormalizedFinding } from '@evident/types';
-import type { RepositoryContext } from '@evident/repository';
+import { listFiles, type RepositoryContext } from '@evident/repository';
 import type { Rule } from './types.js';
 
 const now = () => new Date().toISOString();
@@ -227,3 +227,108 @@ export const cicdRules: Rule[] = [
     },
   },
 ];
+
+export const applicationSecurityRules: Rule[] = [
+  {
+    id: 'app-hardcoded-credential',
+    category: 'SECRET',
+    async run(repo) {
+      const matches = await sourceMatches(
+        repo,
+        /(?:api[_-]?key|client[_-]?secret|password|access[_-]?token|secret)\s*[:=]\s*['"]([^'"\\\n]{8,})['"]/gi,
+      );
+      return matches.map((match) =>
+        finding(
+          'app-hardcoded-credential',
+          'Potential hardcoded credential',
+          'A credential-like identifier is assigned a literal value instead of reading from a secure configuration source.',
+          match.path,
+          'SECRET',
+          'HIGH',
+        ),
+      );
+    },
+  },
+  {
+    id: 'app-unsafe-jwt-decode',
+    category: 'AUTHENTICATION',
+    async run(repo) {
+      const matches = await sourceMatches(repo, /\bjwt\.decode\s*\(/g);
+      return matches.map((match) =>
+        finding(
+          'app-unsafe-jwt-decode',
+          'JWT decoded without verification',
+          'jwt.decode() does not validate a token signature. Use jwt.verify() before trusting claims.',
+          match.path,
+          'AUTHENTICATION',
+          'HIGH',
+        ),
+      );
+    },
+  },
+  {
+    id: 'app-sensitive-logging',
+    category: 'AUDIT_LOGGING',
+    async run(repo) {
+      const matches = await sourceMatches(
+        repo,
+        /(?:console|logger|log)\.(?:log|info|debug|warn|error)\s*\([^\n]*(?:password|token|authorization|ssn|phi)/gi,
+      );
+      return matches.map((match) =>
+        finding(
+          'app-sensitive-logging',
+          'Sensitive value may be logged',
+          'A logging call references a password, token, authorization value, SSN, or PHI identifier.',
+          match.path,
+          'AUDIT_LOGGING',
+          'HIGH',
+        ),
+      );
+    },
+  },
+  {
+    id: 'app-unguarded-sensitive-route',
+    category: 'AUTHORIZATION',
+    async run(repo) {
+      const matches = await sourceMatches(
+        repo,
+        /(?:app|router)\.(?:get|post|put|patch|delete)\s*\(\s*['"]\/(?:admin|export|patients?)[^'"]*['"][^\n]*/gi,
+      );
+      return matches
+        .filter((match) => !/auth|authorize|permission|role|scope/i.test(match.line))
+        .map((match) =>
+          finding(
+            'app-unguarded-sensitive-route',
+            'Sensitive route may lack authorization middleware',
+            'An admin, export, or patient route has no visible authorization middleware on its registration line.',
+            match.path,
+            'AUTHORIZATION',
+            'MEDIUM',
+          ),
+        );
+    },
+  },
+];
+
+async function sourceMatches(
+  repo: RepositoryContext,
+  pattern: RegExp,
+): Promise<Array<{ path: string; line: string }>> {
+  const files = await listFiles({
+    cwd: repo.root,
+    include: ['**/*.{js,cjs,mjs,ts,cts,mts,jsx,tsx}'],
+    exclude: ['**/*.test.*', '**/*.spec.*', '**/fixtures/**'],
+  });
+  const matches: Array<{ path: string; line: string }> = [];
+
+  for (const path of files) {
+    const content = readWorkflow(repo, path);
+    if (!content) continue;
+    for (const line of content.split('\n')) {
+      pattern.lastIndex = 0;
+      if (pattern.test(line)) matches.push({ path, line });
+    }
+  }
+
+  return matches;
+}

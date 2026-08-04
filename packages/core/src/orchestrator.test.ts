@@ -53,4 +53,16 @@ describe('scanRepository (native-only)', () => {
     const written = JSON.parse(await readFile(join(out, 'report.json'), 'utf8'));
     expect(written.repository.name).toBe('core-demo');
   });
+
+  it('evaluates a requested framework', async () => {
+    const result = await scanRepository({
+      root: fixture,
+      mode: 'native-only',
+      frameworks: ['soc2'],
+      logLevel: 'silent',
+    });
+
+    expect(result.controls.length).toBeGreaterThan(0);
+    expect(result.controls.every((control) => control.framework === 'soc2')).toBe(true);
+  });
 });
