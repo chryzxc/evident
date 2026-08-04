@@ -5,6 +5,7 @@ export interface SpawnResult {
   stderr: string;
   exitCode: number;
   durationMs: number;
+  timedOut: boolean;
 }
 
 export interface SpawnOptions {
@@ -22,11 +23,15 @@ export function spawnProcess(opts: SpawnOptions): Promise<SpawnResult> {
     const child = spawn(binary, args, {
       cwd,
       stdio: ['ignore', 'pipe', 'pipe'],
-      timeout: timeoutMs,
     });
 
     let stdout = '';
     let stderr = '';
+    let timedOut = false;
+    const timer = setTimeout(() => {
+      timedOut = true;
+      child.kill('SIGTERM');
+    }, timeoutMs);
 
     child.stdout?.on('data', (d: Buffer) => {
       stdout += d.toString('utf8');
@@ -36,12 +41,14 @@ export function spawnProcess(opts: SpawnOptions): Promise<SpawnResult> {
     });
 
     child.on('error', (err: NodeJS.ErrnoException) => {
+      clearTimeout(timer);
       if (err.code === 'ENOENT') {
         resolve({
           stdout: '',
           stderr: `${binary}: command not found`,
           exitCode: 127,
           durationMs: Date.now() - started,
+          timedOut: false,
         });
       } else {
         reject(err);
@@ -49,11 +56,13 @@ export function spawnProcess(opts: SpawnOptions): Promise<SpawnResult> {
     });
 
     child.on('close', (code) => {
+      clearTimeout(timer);
       resolve({
         stdout,
         stderr,
         exitCode: code ?? 1,
         durationMs: Date.now() - started,
+        timedOut,
       });
     });
   });

@@ -1,0 +1,10 @@
+{
+  "vulnerabilities": {
+    "express": {
+      "severity": "high",
+      "title": "Open Redirect in express",
+      "overview": "Express contains an open redirect vulnerability.",
+      "via": ["CVE-2024-29041"]
+    }
+  }
+}

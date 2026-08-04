@@ -47,6 +47,7 @@ export abstract class BaseProcessAdapter implements ScannerAdapter {
       stderr: result.stderr,
       exitCode: result.exitCode,
       durationMs: result.durationMs,
+      timedOut: result.timedOut,
     };
   }
 }

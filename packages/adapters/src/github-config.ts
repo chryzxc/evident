@@ -56,6 +56,7 @@ export class GitHubConfigAdapter implements ScannerAdapter {
       stderr: '',
       exitCode: 0,
       durationMs: 0,
+      timedOut: false,
     };
   }
 
@@ -84,25 +85,7 @@ export class GitHubConfigAdapter implements ScannerAdapter {
       });
     };
 
-    const hasCI = Boolean(config['workflows']);
-    const hasDependabot = Boolean(config['.github/dependabot.yml'] || config['.github/dependabot.yaml']);
-    const hasSecurityMd = Boolean(config['SECURITY.md']);
-    const hasCodeowners = Boolean(config['CODEOWNERS']);
-
-    if (!hasCI) {
-      push('Missing CI workflow', 'No GitHub Actions workflow found in .github/workflows/', '.github/workflows/', 'CI_CD');
-    }
-    if (!hasDependabot) {
-      push('Missing Dependabot configuration', '.github/dependabot.yml not found', '.github/dependabot.yml', 'CI_CD');
-    }
-    if (!hasSecurityMd) {
-      push('Missing SECURITY.md', 'No security policy file found', 'SECURITY.md', 'OTHER');
-    }
-    if (!hasCodeowners) {
-      push('Missing CODEOWNERS', 'No CODEOWNERS file found', 'CODEOWNERS', 'OTHER');
-    }
-
-    if (hasCI && config.workflows) {
+    if (config.workflows) {
       const wfFiles = config.workflows as Record<string, string>;
       for (const [name, content] of Object.entries(wfFiles)) {
         const path = `.github/workflows/${name}`;
@@ -122,10 +105,10 @@ export class GitHubConfigAdapter implements ScannerAdapter {
 }
 
 function containsUnpinnedAction(content: string): boolean {
-  const lines = content.split('\n');
-  const pinned = content.includes('@sha256:') || content.includes('@v1');
-  if (!pinned) return false;
-
-  const needle = /uses:\s*(\S+@\D)/;
-  return lines.some((line) => needle.test(line));
+  const uses = /\buses:\s*[^\s@]+@([^\s#]+)/g;
+  let match: RegExpExecArray | null;
+  while ((match = uses.exec(content)) !== null) {
+    if (!/^[a-f0-9]{40}$/i.test(match[1] ?? '')) return true;
+  }
+  return false;
 }

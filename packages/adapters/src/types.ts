@@ -25,6 +25,7 @@ export interface RawScannerResult {
   stderr: string;
   exitCode: number;
   durationMs: number;
+  timedOut: boolean;
 }
 
 export interface ScannerAdapter {

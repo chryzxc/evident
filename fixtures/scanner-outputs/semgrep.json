@@ -1,0 +1,13 @@
+{
+  "results": [
+    {
+      "check_id": "javascript.lang.security.audit.eval-detected",
+      "path": "src/app.ts",
+      "start": { "line": 12 },
+      "extra": {
+        "message": "Detected eval()",
+        "severity": "ERROR"
+      }
+    }
+  ]
+}

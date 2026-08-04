@@ -1,0 +1,15 @@
+{
+  "Results": [
+    {
+      "Target": "package-lock.json",
+      "Vulnerabilities": [
+        {
+          "VulnerabilityID": "CVE-2024-0001",
+          "Title": "Fixture dependency vulnerability",
+          "Description": "Fixture scanner output.",
+          "Severity": "CRITICAL"
+        }
+      ]
+    }
+  ]
+}

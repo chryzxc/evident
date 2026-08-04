@@ -6,7 +6,7 @@ import { SemgrepAdapter } from './semgrep.js';
 import { TrivyAdapter } from './trivy.js';
 import { TrufflehogAdapter } from './trufflehog.js';
 
-export function createAdapters(config: ResolvedConfig): ScannerAdapter[] {
+export function createAdapters(config: ResolvedConfig, selected?: string[]): ScannerAdapter[] {
   const adapters: ScannerAdapter[] = [];
   const scanners = config.scanners;
 
@@ -25,5 +25,8 @@ export function createAdapters(config: ResolvedConfig): ScannerAdapter[] {
 
   adapters.push(new GitHubConfigAdapter());
 
-  return adapters;
+  if (!selected || selected.length === 0) return adapters;
+
+  const requested = new Set(selected.map((id) => id.trim().toLowerCase()));
+  return adapters.filter((adapter) => requested.has(adapter.id));
 }
