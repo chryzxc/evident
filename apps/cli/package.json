@@ -1,0 +1,31 @@
+{
+  "name": "@evident/cli",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "evident": "./dist/index.js"
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsup src/index.ts --format esm --clean --sourcemap",
+    "dev": "tsx src/index.ts",
+    "test": "vitest run",
+    "lint": "eslint src --max-warnings=0",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "clean": "rm -rf dist .turbo"
+  },
+  "dependencies": {
+    "@evident/adapters": "workspace:*",
+    "@evident/config": "workspace:*",
+    "@evident/core": "workspace:*",
+    "@evident/reporters": "workspace:*",
+    "@evident/repository": "workspace:*",
+    "@evident/types": "workspace:*",
+    "commander": "^12.1.0",
+    "picocolors": "^1.1.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0"
+  }
+}
