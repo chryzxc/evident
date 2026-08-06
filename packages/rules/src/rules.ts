@@ -13,6 +13,7 @@ function finding(
   path: string,
   category: NormalizedFinding['category'],
   severity: NormalizedFinding['severity'] = 'LOW',
+  lineStart?: number,
 ): NormalizedFinding {
   return {
     id,
@@ -24,7 +25,7 @@ function finding(
     confidence: 'HIGH',
     status: 'OPEN',
     sources: [{ tool: 'evident-rules', detectedAt: now() }],
-    locations: [{ path }],
+    locations: [{ path, lineStart }],
     identifiers: [{ type: 'RULE', value: id }],
     mappings: [],
     evidence: [],
@@ -245,6 +246,7 @@ export const applicationSecurityRules: Rule[] = [
           match.path,
           'SECRET',
           'HIGH',
+          match.lineStart,
         ),
       );
     },
@@ -262,6 +264,7 @@ export const applicationSecurityRules: Rule[] = [
           match.path,
           'AUTHENTICATION',
           'HIGH',
+          match.lineStart,
         ),
       );
     },
@@ -282,6 +285,7 @@ export const applicationSecurityRules: Rule[] = [
           match.path,
           'AUDIT_LOGGING',
           'HIGH',
+          match.lineStart,
         ),
       );
     },
@@ -304,6 +308,7 @@ export const applicationSecurityRules: Rule[] = [
             match.path,
             'AUTHORIZATION',
             'MEDIUM',
+            match.lineStart,
           ),
         );
     },
@@ -313,20 +318,20 @@ export const applicationSecurityRules: Rule[] = [
 async function sourceMatches(
   repo: RepositoryContext,
   pattern: RegExp,
-): Promise<Array<{ path: string; line: string }>> {
+): Promise<Array<{ path: string; line: string; lineStart: number }>> {
   const files = await listFiles({
     cwd: repo.root,
     include: ['**/*.{js,cjs,mjs,ts,cts,mts,jsx,tsx}'],
     exclude: ['**/*.test.*', '**/*.spec.*', '**/fixtures/**'],
   });
-  const matches: Array<{ path: string; line: string }> = [];
+  const matches: Array<{ path: string; line: string; lineStart: number }> = [];
 
   for (const path of files) {
     const content = readWorkflow(repo, path);
     if (!content) continue;
-    for (const line of content.split('\n')) {
+    for (const [index, line] of content.split('\n').entries()) {
       pattern.lastIndex = 0;
-      if (pattern.test(line)) matches.push({ path, line });
+      if (pattern.test(line)) matches.push({ path, line, lineStart: index + 1 });
     }
   }
 

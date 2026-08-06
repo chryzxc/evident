@@ -10,12 +10,14 @@ export class SemgrepAdapter extends BaseProcessAdapter {
     super('semgrep');
   }
 
-  getArgs(_ctx: AdapterContext): string[] {
+  getArgs(ctx: AdapterContext): string[] {
     const args = ['scan', '--json'];
     for (const c of this.semgrepConfigs) {
       args.push('--config', c);
     }
-    return args;
+    return ctx.changedFiles && ctx.changedFiles.length > 0
+      ? [...args, ...ctx.changedFiles]
+      : args;
   }
 
   async normalize(raw: RawScannerResult): Promise<NormalizedFinding[]> {

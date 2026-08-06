@@ -1,7 +1,7 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { loadConfig } from '@evident/config';
-import { detectRepository, type RepositoryContext } from '@evident/repository';
+import { detectRepository, getChangedFiles, type RepositoryContext } from '@evident/repository';
 import type { AdapterContext, AdapterRunResult } from '@evident/adapters';
 import type {
   AdapterRun,
@@ -101,12 +101,20 @@ export async function scanRepository(
 
   logger.info(`Detected ${repository.name}: ${repository.languages.join('/') || 'unknown'}, ${repository.frameworks.join('/') || 'no framework'}`);
 
+  const changedFiles = options.mode === 'changed-only'
+    ? await getChangedFiles(repository.root, options.base)
+    : undefined;
+  if (options.mode === 'changed-only') {
+    logger.info(`Changed-file scope: ${changedFiles?.length ?? 0} files`);
+  }
+
   const adapterCtx: AdapterContext = {
     root: resolve(options.root),
     repository,
     config,
     offline: options.offline ?? false,
     timeout: options.timeout,
+    changedFiles,
   };
 
   const runAdapters = hooks.runAdapters ?? DEFAULT_HOOKS.runAdapters!;
@@ -129,6 +137,16 @@ export async function scanRepository(
       `Scan execution failed: ${err instanceof Error ? err.message : String(err)}`,
       EXIT.INTERNAL_ERROR,
       err,
+    );
+  }
+
+  if (changedFiles) {
+    findings = findings.filter((finding) =>
+      finding.locations.some((location) =>
+        changedFiles.some(
+          (path) => path === location.path || path.startsWith(`${location.path.replace(/\/$/, '')}/`),
+        ),
+      ),
     );
   }
 

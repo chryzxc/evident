@@ -18,7 +18,7 @@ repository context, evidence references, and regression-friendly fingerprints.
   adapters. Missing tools are represented as incomplete coverage rather than a
   passing result.
 - Normalize npm audit and TruffleHog output into a shared finding model.
-- Deduplicate findings by secret fingerprint, CVE, and stable file/category signals.
+- Deduplicate findings by secret fingerprint, package-aware CVE, and stable file/category signals.
 - Preserve every contributing scanner source in merged findings.
 - Discover workflow evidence and basic repository artifacts.
 - Produce terminal, JSON, HTML, and SARIF 2.1.0 reports.
@@ -113,8 +113,8 @@ Supported options:
 | `--output <dir>` | Report directory, default `.evident/reports`. |
 | `--fail-on <list>` | Block on a configured severity threshold. |
 | `--offline` | Request offline-compatible adapter behavior. |
-| `--changed-only` | Reserved for changed-file scanning workflows. |
-| `--base <ref>` | Enables baseline comparison when a local baseline exists. |
+| `--changed-only` | Only retain findings located in files changed from `--base`. |
+| `--base <ref>` | Git ref for changed-file scans, defaulting to `HEAD~1`; also enables local baseline comparison. |
 | `--new-only` | Apply the severity policy only to baseline-new findings. |
 | `--timeout <seconds>` | Per-scanner process timeout. |
 | `--ci` | Enables non-interactive CI behavior. |

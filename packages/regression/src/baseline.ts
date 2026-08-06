@@ -3,20 +3,26 @@ import { join } from 'node:path';
 import type { RegressionItem, EvidentFinding, ScanResult } from '@evident/types';
 
 export interface Baseline {
+  schemaVersion: 1;
   createdAt: string;
   repository: string;
   commitSha?: string;
+  profiles: string[];
+  frameworks: string[];
   fingerprints: Array<{ fingerprint: string; severity: string; category: string; title: string }>;
 }
 
 export async function createBaseline(
-  from: Pick<ScanResult, 'findings' | 'repository'>,
+  from: Pick<ScanResult, 'findings' | 'repository' | 'profiles' | 'frameworks'>,
   outputDir: string,
 ): Promise<Baseline> {
   const baseline: Baseline = {
+    schemaVersion: 1,
     createdAt: new Date().toISOString(),
     repository: from.repository.name,
     commitSha: from.repository.git?.sha,
+    profiles: from.profiles,
+    frameworks: from.frameworks,
     fingerprints: from.findings.map((f) => ({
       fingerprint: f.fingerprint,
       severity: f.severity,
@@ -47,7 +53,7 @@ export function classifyFindings(
   if (!baseline) return [];
 
   const prev = new Set(baseline.fingerprints.map((f) => f.fingerprint));
-  const prevBySev = new Map(baseline.fingerprints.map((f) => [f.fingerprint, f.severity]));
+  const previous = new Map(baseline.fingerprints.map((f) => [f.fingerprint, f]));
   const curr = new Map(findings.map((f) => [f.fingerprint, f]));
 
   const items: RegressionItem[] = [];
@@ -56,7 +62,9 @@ export function classifyFindings(
     if (!prev.has(f.fingerprint)) {
       items.push({ findingId: f.id, fingerprint: f.fingerprint, classification: 'NEW' });
     } else {
-      items.push({ findingId: f.id, fingerprint: f.fingerprint, classification: 'UNCHANGED' });
+      const previousSeverity = previous.get(f.fingerprint)?.severity;
+      const classification = compareSeverity(f.severity, previousSeverity);
+      items.push({ findingId: f.id, fingerprint: f.fingerprint, classification });
     }
   }
 
@@ -66,10 +74,24 @@ export function classifyFindings(
         findingId: fp,
         fingerprint: fp,
         classification: 'FIXED',
-        details: `Previously: ${prevBySev.get(fp) ?? 'unknown'}`,
+        details: `Previously: ${previous.get(fp)?.severity ?? 'unknown'}`,
       });
     }
   }
 
   return items;
+}
+
+function compareSeverity(current: string, previous: string | undefined): RegressionItem['classification'] {
+  if (!previous) return 'UNCHANGED';
+  const rank: Record<string, number> = {
+    INFORMATIONAL: 1,
+    LOW: 2,
+    MEDIUM: 3,
+    HIGH: 4,
+    CRITICAL: 5,
+  };
+  if ((rank[current] ?? 0) > (rank[previous] ?? 0)) return 'WORSENED';
+  if ((rank[current] ?? 0) < (rank[previous] ?? 0)) return 'IMPROVED';
+  return 'UNCHANGED';
 }

@@ -8,6 +8,7 @@ export interface AdapterContext {
   config: ResolvedConfig;
   offline: boolean;
   timeout?: number;
+  changedFiles?: string[];
 }
 
 export interface AdapterDetection {

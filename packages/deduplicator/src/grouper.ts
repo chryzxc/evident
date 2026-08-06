@@ -32,6 +32,7 @@ export function deduplicate(findings: NormalizedFinding[]): DeduplicationGroup[]
 
     const merged: NormalizedFinding = {
       ...primary,
+      fingerprint: fp,
       sources: group.flatMap((f) => f.sources),
       locations: group.flatMap((f) => f.locations),
       identifiers: dedupeIdentifiers(group.flatMap((f) => f.identifiers)),

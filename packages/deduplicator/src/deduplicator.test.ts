@@ -67,6 +67,37 @@ describe('deduplicate', () => {
     expect(groups).toHaveLength(2);
   });
 
+  it('does not merge the same CVE across different packages', () => {
+    const f1 = finding({
+      identifiers: [
+        { type: 'CVE', value: 'CVE-2024-0001' },
+        { type: 'PACKAGE', value: 'express' },
+      ],
+    });
+    const f2 = finding({
+      identifiers: [
+        { type: 'CVE', value: 'CVE-2024-0001' },
+        { type: 'PACKAGE', value: 'other-package' },
+      ],
+    });
+
+    expect(deduplicate([f1, f2])).toHaveLength(2);
+  });
+
+  it('uses the canonical group fingerprint for baseline stability', () => {
+    const groups = deduplicate([
+      finding({
+        fingerprint: 'tool-specific',
+        identifiers: [
+          { type: 'CVE', value: 'CVE-2024-0001' },
+          { type: 'PACKAGE', value: 'express' },
+        ],
+      }),
+    ]);
+
+    expect(groups[0]?.primary.fingerprint).toBe(groups[0]?.fingerprint);
+  });
+
   it('merges by secret fingerprint', () => {
     const f1 = finding({
       category: 'SECRET',

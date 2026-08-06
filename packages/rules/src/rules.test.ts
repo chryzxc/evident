@@ -32,6 +32,7 @@ describe('applicationSecurityRules', () => {
           'app-unguarded-sensitive-route',
         ]),
       );
+      expect(findings.find((finding) => finding.id === 'app-unsafe-jwt-decode')?.locations[0]?.lineStart).toBe(2);
     } finally {
       await rm(root, { recursive: true, force: true });
     }

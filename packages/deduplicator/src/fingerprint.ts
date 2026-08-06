@@ -39,8 +39,12 @@ export function computeSecretFingerprint(finding: NormalizedFinding): string | u
 }
 
 export function computeCveFingerprint(finding: NormalizedFinding): string | undefined {
+  const packages = finding.identifiers
+    .filter((id) => id.type === 'PACKAGE')
+    .map((id) => id.value)
+    .sort();
   for (const id of finding.identifiers) {
-    if (id.type === 'CVE') return id.value;
+    if (id.type === 'CVE') return `${packages.join(',') || 'unknown-package'}:${id.value}`;
   }
   return undefined;
 }
