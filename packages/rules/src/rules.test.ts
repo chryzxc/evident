@@ -32,7 +32,30 @@ describe('applicationSecurityRules', () => {
           'app-unguarded-sensitive-route',
         ]),
       );
-      expect(findings.find((finding) => finding.id === 'app-unsafe-jwt-decode')?.locations[0]?.lineStart).toBe(2);
+      expect(
+        findings.find((finding) => finding.id === 'app-unsafe-jwt-decode')?.locations[0]?.lineStart,
+      ).toBe(2);
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
+  it('ignores patterns that only appear in comments or string literals', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'evident-rules-'));
+    try {
+      await mkdir(join(root, 'src'), { recursive: true });
+      await writeFile(join(root, 'package.json'), '{"name":"fixture"}');
+      await writeFile(
+        join(root, 'src', 'docs.ts'),
+        [
+          "const message = 'jwt.decode() does not validate a token signature';",
+          '// jwt.decode(token) is unsafe',
+          ' * jwt.decode(token)',
+        ].join('\n'),
+      );
+      const repo = await detectRepository({ root });
+      const findings = await runRules(repo, applicationSecurityRules);
+      expect(findings.map((finding) => finding.id)).not.toContain('app-unsafe-jwt-decode');
     } finally {
       await rm(root, { recursive: true, force: true });
     }

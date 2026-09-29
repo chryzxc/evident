@@ -1,0 +1,43 @@
+version: 1
+project:
+  name: evident
+  type: application
+profiles:
+  - security
+scanners:
+  npmAudit:
+    enabled: true
+  semgrep:
+    enabled: true
+    config:
+      - p/owasp-top-ten
+  trivy:
+    enabled: true
+    scanners:
+      - vuln
+      - misconfig
+      - secret
+  trufflehog:
+    enabled: true
+    verifiedOnly: true
+scan:
+  exclude:
+    - node_modules/**
+    - dist/**
+    - build/**
+    - coverage/**
+    - .git/**
+policy:
+  failOn:
+    severity:
+      - high
+      - critical
+privacy:
+  sendSourceToAI: false
+  redactSecrets: true
+  redactIdentifiers: true
+reporting:
+  formats:
+    - terminal
+    - json
+  outputDirectory: .evident/reports

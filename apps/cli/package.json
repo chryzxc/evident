@@ -6,7 +6,9 @@
   "bin": {
     "evident": "./dist/index.js"
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsup src/index.ts --format esm --clean --sourcemap",
     "dev": "tsx src/index.ts",
@@ -28,5 +30,15 @@
   },
   "devDependencies": {
     "tsx": "^4.19.0"
+  },
+  "description": "Evident CLI: repository intelligence and evidence orchestration.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chryzxc/evident.git",
+    "directory": "apps/cli"
+  },
+  "engines": {
+    "node": ">=20"
   }
 }

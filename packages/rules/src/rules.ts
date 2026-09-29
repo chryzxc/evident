@@ -46,13 +46,8 @@ function readWorkflow(repo: RepositoryContext, relativePath: string): string | u
   }
 }
 
-function hasWorkflowStep(
-  content: string,
-  needle: string | RegExp,
-): boolean {
-  return typeof needle === 'string'
-    ? content.includes(needle)
-    : needle.test(content);
+function hasWorkflowStep(content: string, needle: string | RegExp): boolean {
+  return typeof needle === 'string' ? content.includes(needle) : needle.test(content);
 }
 
 export const governanceRules: Rule[] = [
@@ -140,7 +135,10 @@ export const cicdRules: Rule[] = [
         const content = readWorkflow(repo, wfPath);
         if (!content) continue;
         if (
-          !hasWorkflowStep(content, /run:\s*(.*(vitest|jest|mocha|ava|test|npx test|npm test|npx jest|npx vitest))/)
+          !hasWorkflowStep(
+            content,
+            /run:\s*(.*(vitest|jest|mocha|ava|test|npx test|npm test|npx jest|npx vitest))/,
+          )
         ) {
           missing.push(wfPath);
         }
@@ -315,6 +313,21 @@ export const applicationSecurityRules: Rule[] = [
   },
 ];
 
+// ponytail: line-based heuristic (no multi-line comments/template nesting); use an AST if it misfires.
+function isCommentOrString(line: string, index: number): boolean {
+  if (/^\s*(\/\/|\/\*|\*)/.test(line)) return true;
+  let quote = '';
+  for (let i = 0; i < index; i++) {
+    const c = line[i];
+    if (quote) {
+      if (c === '\\') i++;
+      else if (c === quote) quote = '';
+    } else if (c === '"' || c === "'" || c === '`') quote = c;
+    else if (c === '/' && line[i + 1] === '/') return true;
+  }
+  return quote !== '';
+}
+
 async function sourceMatches(
   repo: RepositoryContext,
   pattern: RegExp,
@@ -331,7 +344,10 @@ async function sourceMatches(
     if (!content) continue;
     for (const [index, line] of content.split('\n').entries()) {
       pattern.lastIndex = 0;
-      if (pattern.test(line)) matches.push({ path, line, lineStart: index + 1 });
+      const hit = pattern.exec(line);
+      if (hit && !isCommentOrString(line, hit.index)) {
+        matches.push({ path, line, lineStart: index + 1 });
+      }
     }
   }
 
