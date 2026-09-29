@@ -31,7 +31,7 @@
   "devDependencies": {
     "tsx": "^4.19.0"
   },
-  "description": "Evident CLI: repository intelligence and evidence orchestration.",
+  "description": "Evident CLI: run Semgrep, Trivy, TruffleHog and npm audit together, deduplicate findings, and report SARIF, JSON and HTML.",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -40,5 +40,17 @@
   },
   "engines": {
     "node": ">=20"
-  }
+  },
+  "keywords": [
+    "security-scanner",
+    "devsecops",
+    "semgrep",
+    "trivy",
+    "trufflehog",
+    "npm-audit",
+    "sarif",
+    "soc2",
+    "ci",
+    "cli"
+  ]
 }

@@ -2,7 +2,7 @@
   "name": "evident",
   "version": "0.1.0",
   "private": true,
-  "description": "Developer-first repository intelligence and evidence orchestration tool.",
+  "description": "Repository security scanner orchestrator: run Semgrep, Trivy, TruffleHog and npm audit, deduplicate findings, map SOC 2 technical evidence, and report as SARIF, JSON and HTML.",
   "type": "module",
   "engines": {
     "node": ">=20"
@@ -44,14 +44,26 @@
     "url": "https://github.com/chryzxc/evident/issues"
   },
   "keywords": [
+    "security-scanner",
     "security",
-    "sarif",
+    "devsecops",
+    "appsec",
+    "sast",
+    "sca",
+    "secret-scanning",
     "semgrep",
     "trivy",
     "trufflehog",
-    "sast",
+    "npm-audit",
+    "sarif",
+    "github-actions",
+    "ci",
     "soc2",
-    "evidence",
+    "compliance-evidence",
+    "vulnerability-management",
+    "deduplication",
+    "typescript",
+    "nodejs",
     "cli"
   ]
 }

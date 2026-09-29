@@ -1,8 +1,17 @@
-# Evident
+# Evident: Repository Security Scanner Orchestrator for Semgrep, Trivy, TruffleHog and npm audit
 
-Evident is a developer-first repository intelligence CLI. It orchestrates security
-signals, normalizes findings, removes duplicates, discovers technical evidence,
-maps that evidence to technical controls, and produces actionable local reports.
+[![CI](https://github.com/chryzxc/evident/actions/workflows/ci.yml/badge.svg)](https://github.com/chryzxc/evident/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-8957e5)](LICENSE)
+[![Node.js 20+](https://img.shields.io/badge/node-%E2%89%A520-1f6feb)](package.json)
+[![SARIF 2.1.0](https://img.shields.io/badge/output-SARIF%202.1.0-6e7681)](#reports)
+
+**Evident is a developer-first CLI that runs Semgrep, Trivy, TruffleHog and npm audit
+together, merges their results into one deduplicated report, and maps technical
+evidence to SOC 2 controls.** It outputs terminal, JSON, HTML and SARIF reports, and
+fails CI only on new findings compared with a baseline.
+
+Use it when you want one security scan for a Node.js or TypeScript repository, fewer
+duplicate alerts across scanners, and regression-friendly fingerprints for pull requests.
 
 Evident does not replace Semgrep, Trivy, TruffleHog, npm audit, or GitHub security
 features. It provides the layer above them: one scan model, source attribution,
