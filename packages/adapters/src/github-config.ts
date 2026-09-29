@@ -1,7 +1,12 @@
 import type { NormalizedFinding } from '@evident/types';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import type { AdapterContext, AdapterDetection, RawScannerResult, ScannerAdapter } from './types.js';
+import type {
+  AdapterContext,
+  AdapterDetection,
+  RawScannerResult,
+  ScannerAdapter,
+} from './types.js';
 
 export class GitHubConfigAdapter implements ScannerAdapter {
   id = 'github-config';
@@ -34,9 +39,7 @@ export class GitHubConfigAdapter implements ScannerAdapter {
         const stat = await import('node:fs/promises').then((m) => m.stat(path));
         if (f.endsWith('/workflows') && stat.isDirectory()) {
           const entries = await import('node:fs/promises').then((m) => m.readdir(path));
-          const yamls = entries.filter(
-            (e: string) => e.endsWith('.yml') || e.endsWith('.yaml'),
-          );
+          const yamls = entries.filter((e: string) => e.endsWith('.yml') || e.endsWith('.yaml'));
           const contents: Record<string, string> = {};
           for (const wf of yamls) {
             contents[wf] = readFileSync(join(path, wf), 'utf8');
@@ -65,7 +68,12 @@ export class GitHubConfigAdapter implements ScannerAdapter {
     const findings: NormalizedFinding[] = [];
     const now = new Date().toISOString();
 
-    const push = (title: string, description: string, path: string, category: NormalizedFinding['category']) => {
+    const push = (
+      title: string,
+      description: string,
+      path: string,
+      category: NormalizedFinding['category'],
+    ) => {
       findings.push({
         id: `EVD-gh-${findings.length}`,
         fingerprint: `gh-${path}`,

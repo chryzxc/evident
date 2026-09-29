@@ -6,7 +6,9 @@ import { handleError } from './errors.js';
 import { runConfiguredScan } from './run-scan.js';
 
 export function createBaselineCommand(): Command {
-  const baseline = new Command('baseline').description('Create and compare local finding baselines');
+  const baseline = new Command('baseline').description(
+    'Create and compare local finding baselines',
+  );
 
   baseline
     .command('create')

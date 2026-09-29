@@ -69,7 +69,10 @@ export async function runAllAdapters(
         required: adapter.required ?? false,
         version: detection.version,
         durationMs: raw.durationMs,
-        message: raw.exitCode === 0 ? undefined : `Exited with code ${raw.exitCode} after producing parseable output`,
+        message:
+          raw.exitCode === 0
+            ? undefined
+            : `Exited with code ${raw.exitCode} after producing parseable output`,
       });
     } catch (err) {
       adapterRuns.push({

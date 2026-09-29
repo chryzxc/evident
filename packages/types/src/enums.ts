@@ -21,7 +21,13 @@ export type Severity = z.infer<typeof SeveritySchema>;
 export const ConfidenceSchema = z.enum(['HIGH', 'MEDIUM', 'LOW']);
 export type Confidence = z.infer<typeof ConfidenceSchema>;
 
-export const FindingStatusSchema = z.enum(['OPEN', 'FIXED', 'ACCEPTED', 'IGNORED', 'FALSE_POSITIVE']);
+export const FindingStatusSchema = z.enum([
+  'OPEN',
+  'FIXED',
+  'ACCEPTED',
+  'IGNORED',
+  'FALSE_POSITIVE',
+]);
 export type FindingStatus = z.infer<typeof FindingStatusSchema>;
 
 export const EvidenceTypeSchema = z.enum([

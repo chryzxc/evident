@@ -1,5 +1,9 @@
 import { z } from 'zod';
-import { ControlRelationshipSchema, MappingStrengthSchema, ControlEvaluationStatusSchema } from './enums.js';
+import {
+  ControlRelationshipSchema,
+  MappingStrengthSchema,
+  ControlEvaluationStatusSchema,
+} from './enums.js';
 
 export const ControlMappingSchema = z.object({
   framework: z.string(),

@@ -1,4 +1,9 @@
-export type { ScannerAdapter, AdapterContext, AdapterDetection, RawScannerResult } from './types.js';
+export type {
+  ScannerAdapter,
+  AdapterContext,
+  AdapterDetection,
+  RawScannerResult,
+} from './types.js';
 export { BaseProcessAdapter } from './base.js';
 export { createAdapters } from './registry.js';
 export { runAllAdapters, type AdapterRunResult } from './orchestrator.js';

@@ -82,7 +82,10 @@ export function classifyFindings(
   return items;
 }
 
-function compareSeverity(current: string, previous: string | undefined): RegressionItem['classification'] {
+function compareSeverity(
+  current: string,
+  previous: string | undefined,
+): RegressionItem['classification'] {
   if (!previous) return 'UNCHANGED';
   const rank: Record<string, number> = {
     INFORMATIONAL: 1,

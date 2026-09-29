@@ -66,9 +66,7 @@ describe('normalizeTrufflehogJsonl', () => {
       },
     ];
 
-    const findings = normalizeTrufflehogJsonl(
-      fixture.map((f) => JSON.stringify(f)).join('\n'),
-    );
+    const findings = normalizeTrufflehogJsonl(fixture.map((f) => JSON.stringify(f)).join('\n'));
 
     expect(findings).toHaveLength(1);
     expect(findings[0]?.category).toBe('SECRET');

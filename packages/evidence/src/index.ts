@@ -35,7 +35,11 @@ export async function discoverEvidence(repo: RepositoryContext): Promise<Evidenc
   const repositoryArtifacts: Array<[string, string, string]> = [
     ['SECURITY.md', 'Security policy', 'Repository security policy'],
     ['CODEOWNERS', 'Code ownership', 'Repository code ownership rules'],
-    ['.github/dependabot.yml', 'Dependabot configuration', 'Automated dependency update configuration'],
+    [
+      '.github/dependabot.yml',
+      'Dependabot configuration',
+      'Automated dependency update configuration',
+    ],
     ['package.json', 'Package manifest', 'Node.js package manifest'],
     ['tsconfig.json', 'TypeScript configuration', 'TypeScript project configuration'],
   ];
@@ -58,7 +62,9 @@ export async function discoverEvidence(repo: RepositoryContext): Promise<Evidenc
   });
   for (const path of sourceFiles) {
     const content = readFileSync(join(repo.root, path), 'utf8');
-    if (/\b(authenticate|authorize|requireAuth|jwt\.verify|passport\.authenticate)\b/i.test(content)) {
+    if (
+      /\b(authenticate|authorize|requireAuth|jwt\.verify|passport\.authenticate)\b/i.test(content)
+    ) {
       await add(
         'SOURCE_CODE',
         'Authentication or authorization implementation',

@@ -28,11 +28,12 @@ export function evaluateControls(
       framework,
       controlId: ctrl.id,
       controlTitle: ctrl.title,
-      status: relevantFindings.length > 0
-        ? 'TECHNICAL_GAP'
-        : relevantEvidence.length > 0
-          ? 'TECHNICAL_EVIDENCE_FOUND'
-          : 'MANUAL_EVIDENCE_REQUIRED',
+      status:
+        relevantFindings.length > 0
+          ? 'TECHNICAL_GAP'
+          : relevantEvidence.length > 0
+            ? 'TECHNICAL_EVIDENCE_FOUND'
+            : 'MANUAL_EVIDENCE_REQUIRED',
       evidenceIds: relevantEvidence.map((item) => item.id),
       findingIds: relevantFindings.map((finding) => finding.id),
       limitations: ctrl.mappings.flatMap((mapping) => mapping.limitations),

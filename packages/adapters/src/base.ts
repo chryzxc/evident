@@ -1,5 +1,10 @@
 import type { NormalizedFinding } from '@evident/types';
-import type { AdapterDetection, AdapterContext, RawScannerResult, ScannerAdapter } from './types.js';
+import type {
+  AdapterDetection,
+  AdapterContext,
+  RawScannerResult,
+  ScannerAdapter,
+} from './types.js';
 import { spawnProcess } from './runner.js';
 import { detectTool } from './detect.js';
 
@@ -22,8 +27,7 @@ export abstract class BaseProcessAdapter implements ScannerAdapter {
     };
   }
 
-  async prepare(_ctx: AdapterContext): Promise<void> {
-  }
+  async prepare(_ctx: AdapterContext): Promise<void> {}
 
   abstract getArgs(ctx: AdapterContext): string[];
   abstract normalize(raw: RawScannerResult, ctx: AdapterContext): Promise<NormalizedFinding[]>;

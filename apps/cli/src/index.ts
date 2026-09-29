@@ -9,7 +9,10 @@ import { createEvidenceCommand } from './commands/evidence.js';
 
 const program = new Command();
 
-program.name('evident').description('Developer-first repository intelligence and evidence orchestration').version('0.1.0');
+program
+  .name('evident')
+  .description('Developer-first repository intelligence and evidence orchestration')
+  .version('0.1.0');
 
 program.addCommand(createScanCommand());
 program.addCommand(createDoctorCommand());

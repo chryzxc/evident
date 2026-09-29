@@ -44,7 +44,9 @@ export const htmlReporter: Reporter = {
 
     const evidenceRows = result.evidence
       .map(
-        (evidence) => `<li><strong>${esc(evidence.type)}</strong> ${esc(evidence.path ?? evidence.title)}</li>`)
+        (evidence) =>
+          `<li><strong>${esc(evidence.type)}</strong> ${esc(evidence.path ?? evidence.title)}</li>`,
+      )
       .join('\n');
 
     return `<!DOCTYPE html>

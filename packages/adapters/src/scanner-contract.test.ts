@@ -49,15 +49,24 @@ function raw(adapterId: string, output: string): RawScannerResult {
 describe('scanner output contracts', () => {
   const cases: Array<[string, ScannerAdapter, string, string, string]> = [
     ['npm-audit', new NpmAuditAdapter(), 'npm-audit.json', 'CVE-2024-29041', 'HIGH'],
-    ['semgrep', new SemgrepAdapter([]), 'semgrep.json', 'javascript.lang.security.audit.eval-detected', 'HIGH'],
+    [
+      'semgrep',
+      new SemgrepAdapter([]),
+      'semgrep.json',
+      'javascript.lang.security.audit.eval-detected',
+      'HIGH',
+    ],
     ['trivy', new TrivyAdapter(['vuln']), 'trivy.json', 'CVE-2024-0001', 'CRITICAL'],
     ['trufflehog', new TrufflehogAdapter(true), 'trufflehog.jsonl', 'AKIA...TEST', 'HIGH'],
   ];
 
-  it.each(cases)('normalizes %s output', async (adapterId, adapter, filename, identifier, severity) => {
+  it.each(cases)(
+    'normalizes %s output',
+    async (adapterId, adapter, filename, identifier, severity) => {
       const findings = await adapter.normalize(raw(adapterId, await fixture(filename)), context);
       expect(findings).toHaveLength(1);
       expect(findings[0]?.severity).toBe(severity);
       expect(findings[0]?.identifiers.some((item) => item.value === identifier)).toBe(true);
-  });
+    },
+  );
 });

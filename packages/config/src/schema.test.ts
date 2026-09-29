@@ -18,7 +18,10 @@ const sample = {
   },
   policy: { failOn: { severity: ['critical', 'high'], newFindingsOnly: true } },
   privacy: { sendSourceToAI: false, redactSecrets: true, redactIdentifiers: true },
-  reporting: { formats: ['terminal', 'json', 'html', 'sarif'], outputDirectory: '.evident/reports' },
+  reporting: {
+    formats: ['terminal', 'json', 'html', 'sarif'],
+    outputDirectory: '.evident/reports',
+  },
 };
 
 describe('config schema', () => {
@@ -38,6 +41,12 @@ describe('config schema', () => {
     expect(DEFAULT_CONFIG.reporting.formats).toEqual(['terminal', 'json']);
     expect(DEFAULT_CONFIG.reporting.outputDirectory).toBe('.evident/reports');
     expect(DEFAULT_CONFIG.scan.exclude).toContain('node_modules/**');
+    expect(DEFAULT_CONFIG.cache).toEqual({
+      enabled: true,
+      preserveRawOutput: false,
+      directory: '.evident/cache',
+    });
+    expect(DEFAULT_CONFIG.scanners.npmAudit?.required).toBe(false);
   });
 
   it('rejects an unknown version', () => {
@@ -52,6 +61,21 @@ describe('config schema', () => {
     expect(() =>
       validateConfig({ policy: { failOn: { severity: [123] } } } as Record<string, unknown>),
     ).toThrow();
+  });
+
+  it('rejects unknown keys at every configuration level', () => {
+    expect(() => validateConfig({ typo: true })).toThrow(ConfigError);
+    expect(() =>
+      validateConfig({ scanners: { semgrep: { enabled: true, unexpected: true } } }),
+    ).toThrow(ConfigError);
+  });
+
+  it('rejects unsupported profiles, frameworks, and fail-on severities', () => {
+    expect(() => validateConfig({ profiles: ['custom'] })).toThrow(ConfigError);
+    expect(() => validateConfig({ frameworks: ['hipaa'] })).toThrow(ConfigError);
+    expect(() => validateConfig({ policy: { failOn: { severity: ['urgent'] } } })).toThrow(
+      ConfigError,
+    );
   });
 
   it('keeps zod schema and DEFAULT_CONFIG consistent', () => {

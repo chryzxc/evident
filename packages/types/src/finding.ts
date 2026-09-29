@@ -5,7 +5,13 @@ import {
   ConfidenceSchema,
   FindingStatusSchema,
 } from './enums.js';
-import { FindingSourceSchema, FindingLocationSchema, FindingIdentifierSchema, RemediationGuidanceSchema, GitReferenceSchema } from './common.js';
+import {
+  FindingSourceSchema,
+  FindingLocationSchema,
+  FindingIdentifierSchema,
+  RemediationGuidanceSchema,
+  GitReferenceSchema,
+} from './common.js';
 import { ControlMappingSchema } from './controls.js';
 import { EvidenceReferenceSchema } from './evidence.js';
 

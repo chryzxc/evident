@@ -1,26 +1,12 @@
 import { cosmiconfig } from 'cosmiconfig';
 import yaml from 'js-yaml';
-import jitiFactory from 'jiti';
+import { extname } from 'node:path';
 import { EvidentConfigSchema, type ResolvedConfig } from './schema.js';
 import { ConfigError } from './errors.js';
 
-const SEARCH_PLACES = [
-  'evident.config.json',
-  'evident.config.yaml',
-  'evident.config.yml',
-  'evident.config.ts',
-  'evident.config.mjs',
-  'evident.config.cjs',
-  'evident.config.js',
-];
-
-const jiti = jitiFactory(import.meta.url, { interopDefault: true, cache: false, requireCache: false });
+const SEARCH_PLACES = ['evident.config.json', 'evident.config.yaml', 'evident.config.yml'];
 
 const yamlLoader = (_filepath: string, content: string): unknown => yaml.load(content);
-
-const tsLoader = (filepath: string): unknown => {
-  return jiti(filepath);
-};
 
 export interface LoadConfigOptions {
   cwd?: string;
@@ -39,14 +25,15 @@ export async function loadConfig(options: LoadConfigOptions = {}): Promise<Resol
   let raw: Record<string, unknown> | undefined;
 
   try {
+    if (options.configPath && !isSupportedConfigPath(options.configPath)) {
+      throw new ConfigError('Evident configuration must be a .json, .yaml, or .yml file.');
+    }
+
     const explorer = cosmiconfig('evident', {
       searchPlaces: SEARCH_PLACES,
       loaders: {
         '.yaml': yamlLoader,
         '.yml': yamlLoader,
-        '.ts': tsLoader,
-        '.mts': tsLoader,
-        '.cts': tsLoader,
       },
     });
 
@@ -56,18 +43,16 @@ export async function loadConfig(options: LoadConfigOptions = {}): Promise<Resol
 
     if (result?.config && typeof result.config === 'object') {
       raw = result.config as Record<string, unknown>;
-      (raw as Record<string, unknown>).__configPath = result.filepath;
     }
   } catch (err) {
+    if (err instanceof ConfigError) throw err;
     throw new ConfigError(
       `Failed to load Evident config: ${err instanceof Error ? err.message : String(err)}`,
       err,
     );
   }
 
-  const merged = options.overrides
-    ? { ...(raw ?? {}), ...options.overrides }
-    : (raw ?? {});
+  const merged = options.overrides ? mergeConfig(raw ?? {}, options.overrides) : (raw ?? {});
 
   const parsed = EvidentConfigSchema.safeParse(merged);
   if (!parsed.success) {
@@ -78,6 +63,35 @@ export async function loadConfig(options: LoadConfigOptions = {}): Promise<Resol
   }
 
   return parsed.data;
+}
+
+export function mergeConfig(
+  base: Record<string, unknown>,
+  overrides: Record<string, unknown>,
+): Record<string, unknown> {
+  const merged: Record<string, unknown> = { ...base };
+
+  for (const [key, override] of Object.entries(overrides)) {
+    const current = merged[key];
+    merged[key] =
+      isPlainObject(current) && isPlainObject(override) ? mergeConfig(current, override) : override;
+  }
+
+  return merged;
+}
+
+export function stringifyConfigYaml(config: Record<string, unknown>): string {
+  return yaml.dump(config, { lineWidth: -1 });
+}
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) return false;
+  const prototype = Object.getPrototypeOf(value);
+  return prototype === Object.prototype || prototype === null;
+}
+
+function isSupportedConfigPath(path: string): boolean {
+  return ['.json', '.yaml', '.yml'].includes(extname(path).toLowerCase());
 }
 
 /**

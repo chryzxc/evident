@@ -95,7 +95,8 @@ export function normalizeTrufflehogJsonl(raw: string): NormalizedFinding[] {
               entry['SourceName'] ??
               '',
           ),
-          lineStart: (Number(get(entry, 'SourceMetadata', 'Data', 'Filesystem', 'line')) || undefined),
+          lineStart:
+            Number(get(entry, 'SourceMetadata', 'Data', 'Filesystem', 'line')) || undefined,
         },
       ],
       identifiers: [{ type: 'SECRET_FINGERPRINT', value: String(fingerprint) }],

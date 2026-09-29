@@ -7,8 +7,9 @@ describe('createAdapters', () => {
     const adapters = createAdapters({
       ...DEFAULT_CONFIG,
       scanners: {
-        npmAudit: { enabled: true, level: 'low' },
-        semgrep: { enabled: true, config: [] },
+        ...DEFAULT_CONFIG.scanners,
+        npmAudit: { ...DEFAULT_CONFIG.scanners.npmAudit, enabled: true, level: 'low' },
+        semgrep: { ...DEFAULT_CONFIG.scanners.semgrep, enabled: true, config: [] },
       },
     });
 

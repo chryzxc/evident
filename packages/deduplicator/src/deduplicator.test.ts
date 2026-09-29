@@ -27,8 +27,12 @@ function finding(over: Partial<NormalizedFinding> = {}): NormalizedFinding {
 
 describe('fingerprint stability', () => {
   it('produces the same fingerprint for identical findings', () => {
-    const fp1 = computeFingerprint(finding({ identifiers: [{ type: 'CVE', value: 'CVE-2024-0001' }] }));
-    const fp2 = computeFingerprint(finding({ identifiers: [{ type: 'CVE', value: 'CVE-2024-0001' }] }));
+    const fp1 = computeFingerprint(
+      finding({ identifiers: [{ type: 'CVE', value: 'CVE-2024-0001' }] }),
+    );
+    const fp2 = computeFingerprint(
+      finding({ identifiers: [{ type: 'CVE', value: 'CVE-2024-0001' }] }),
+    );
     expect(fp1).toBe(fp2);
   });
 });

@@ -37,8 +37,5 @@ export interface ScannerAdapter {
   detect(repository: RepositoryContext): Promise<AdapterDetection>;
   prepare(ctx: AdapterContext): Promise<void>;
   run(ctx: AdapterContext): Promise<RawScannerResult>;
-  normalize(
-    raw: RawScannerResult,
-    ctx: AdapterContext,
-  ): Promise<NormalizedFinding[]>;
+  normalize(raw: RawScannerResult, ctx: AdapterContext): Promise<NormalizedFinding[]>;
 }

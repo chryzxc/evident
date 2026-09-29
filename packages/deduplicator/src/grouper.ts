@@ -1,5 +1,9 @@
 import type { NormalizedFinding } from '@evident/types';
-import { computeFingerprint, computeSecretFingerprint, computeCveFingerprint } from './fingerprint.js';
+import {
+  computeFingerprint,
+  computeSecretFingerprint,
+  computeCveFingerprint,
+} from './fingerprint.js';
 
 export interface DeduplicationGroup {
   fingerprint: string;

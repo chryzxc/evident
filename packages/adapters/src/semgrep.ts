@@ -15,9 +15,7 @@ export class SemgrepAdapter extends BaseProcessAdapter {
     for (const c of this.semgrepConfigs) {
       args.push('--config', c);
     }
-    return ctx.changedFiles && ctx.changedFiles.length > 0
-      ? [...args, ...ctx.changedFiles]
-      : args;
+    return ctx.changedFiles && ctx.changedFiles.length > 0 ? [...args, ...ctx.changedFiles] : args;
   }
 
   async normalize(raw: RawScannerResult): Promise<NormalizedFinding[]> {
@@ -45,7 +43,9 @@ function parseSemgrepJson(data: Record<string, unknown>): NormalizedFinding[] {
         confidence: 'HIGH' as const,
         status: 'OPEN' as const,
         sources: [{ tool: 'semgrep', detectedAt: now }],
-        locations: [{ path: String(r['path'] ?? ''), lineStart: Number(start['line']) || undefined }],
+        locations: [
+          { path: String(r['path'] ?? ''), lineStart: Number(start['line']) || undefined },
+        ],
         identifiers: [{ type: 'RULE' as const, value: String(r['check_id'] ?? '') }],
         mappings: [],
         evidence: [],

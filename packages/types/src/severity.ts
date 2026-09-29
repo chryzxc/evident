@@ -22,10 +22,7 @@ export function compareSeverity(a: Severity, b: Severity): number {
  * Returns true if `severity` meets or exceeds the configured blocking threshold.
  * Any threshold not in the map blocks nothing (only explicit severities block).
  */
-export function isBlocking(
-  severity: Severity,
-  failOnSeverities: string[] | undefined,
-): boolean {
+export function isBlocking(severity: Severity, failOnSeverities: string[] | undefined): boolean {
   if (!failOnSeverities || failOnSeverities.length === 0) return false;
   const normalized = failOnSeverities
     .map((s) => s.toUpperCase())

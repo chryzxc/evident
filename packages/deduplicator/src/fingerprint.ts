@@ -25,10 +25,7 @@ export function computeFingerprint(finding: NormalizedFinding): string {
   signals.push(`cat:${finding.category}`);
   signals.push(`title:${hashTrunc(finding.title)}`);
 
-  return createHash('sha256')
-    .update(signals.join('\u0000'))
-    .digest('hex')
-    .slice(0, 16);
+  return createHash('sha256').update(signals.join('\u0000')).digest('hex').slice(0, 16);
 }
 
 export function computeSecretFingerprint(finding: NormalizedFinding): string | undefined {

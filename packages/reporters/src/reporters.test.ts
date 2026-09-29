@@ -92,7 +92,9 @@ describe('terminalReporter', () => {
   });
 
   it('warns on incomplete coverage', () => {
-    const out = terminalReporter.render(fixture({ coverage: { complete: false, partial: true, missingTools: ['semgrep'] } }));
+    const out = terminalReporter.render(
+      fixture({ coverage: { complete: false, partial: true, missingTools: ['semgrep'] } }),
+    );
     expect(out).toContain('Coverage incomplete');
     expect(out).toContain('semgrep');
   });

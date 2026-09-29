@@ -5,31 +5,30 @@ export const sarifReporter: Reporter = {
   format: 'sarif',
   render(result: ScanResult): string {
     const findings = result.findings.filter((f) => f.locations.length > 0 && f.locations[0]?.path);
-    const results = findings
-      .map((f) => {
-        const loc = f.locations[0]!;
-        return {
-          ruleId: f.id,
-          level: sarifLevel(f.severity),
-          message: { text: `${f.title}: ${f.description}` },
-          properties: {
-            category: f.category,
-            confidence: f.confidence,
-            sources: f.sources.map((source) => source.tool),
-          },
-          locations: [
-            {
-              physicalLocation: {
-                artifactLocation: { uri: loc.path },
-                region: {
-                  startLine: loc.lineStart,
-                  ...(loc.lineEnd ? { endLine: loc.lineEnd } : {}),
-                },
+    const results = findings.map((f) => {
+      const loc = f.locations[0]!;
+      return {
+        ruleId: f.id,
+        level: sarifLevel(f.severity),
+        message: { text: `${f.title}: ${f.description}` },
+        properties: {
+          category: f.category,
+          confidence: f.confidence,
+          sources: f.sources.map((source) => source.tool),
+        },
+        locations: [
+          {
+            physicalLocation: {
+              artifactLocation: { uri: loc.path },
+              region: {
+                startLine: loc.lineStart,
+                ...(loc.lineEnd ? { endLine: loc.lineEnd } : {}),
               },
             },
-          ],
-        };
-      });
+          },
+        ],
+      };
+    });
 
     const sarif = JSON.stringify(
       {
