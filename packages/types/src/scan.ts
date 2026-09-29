@@ -84,6 +84,8 @@ export interface ScanOptions {
   frameworks?: string[];
   scanners?: string[];
   mode?: ScanMode;
+  /** Restrict findings to files changed from `base`; combinable with `mode: 'native-only'`. */
+  changedOnly?: boolean;
   formats?: string[];
   outputDirectory?: string;
   failOn?: {

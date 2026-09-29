@@ -80,22 +80,25 @@ describe('scanRepository (native-only)', () => {
     await execFile('git', ['add', 'src/changed.ts'], { cwd: fixture });
     await execFile('git', ['commit', '-qm', 'changed source'], { cwd: fixture });
 
-    const result = await scanRepository({
-      root: fixture,
-      mode: 'changed-only',
-      base: 'HEAD~1',
-      logLevel: 'silent',
-    }, {
-      runAdapters: async () => ({
-        adapterRuns: [],
-        findings: [
-          findingAt('changed', 'src/changed.ts'),
-          findingAt('unchanged', 'tsconfig.json'),
-          findingAt('unlocated'),
-        ],
-      }),
-      runNativeRules: async () => [],
-    });
+    const result = await scanRepository(
+      {
+        root: fixture,
+        mode: 'changed-only',
+        base: 'HEAD~1',
+        logLevel: 'silent',
+      },
+      {
+        runAdapters: async () => ({
+          adapterRuns: [],
+          findings: [
+            findingAt('changed', 'src/changed.ts'),
+            findingAt('unchanged', 'tsconfig.json'),
+            findingAt('unlocated'),
+          ],
+        }),
+        runNativeRules: async () => [],
+      },
+    );
 
     expect(result.findings.map((finding) => finding.id)).toEqual(['changed']);
   });
@@ -107,7 +110,7 @@ function findingAt(id: string, path?: string): EvidentFinding {
     fingerprint: id,
     title: id,
     description: id,
-    category: 'SECURITY_CONFIGURATION',
+    category: 'OTHER',
     severity: 'LOW',
     confidence: 'HIGH',
     status: 'OPEN',
@@ -120,3 +123,47 @@ function findingAt(id: string, path?: string): EvidentFinding {
     lastSeenAt: '',
   };
 }
+
+describe('scanRepository safety', () => {
+  const base = () => ({
+    root: fixture,
+    formats: ['terminal' as const],
+    outputDirectory: join(fixture, '.evident', 'reports'),
+    logLevel: 'silent' as const,
+  });
+
+  it('fails instead of passing when the changed-only base ref cannot be resolved', async () => {
+    await expect(
+      scanRepository({ ...base(), mode: 'native-only', changedOnly: true, base: 'no-such-ref' }),
+    ).rejects.toMatchObject({ exitCode: 2 });
+  });
+
+  it('keeps native-only when combined with changed-only', async () => {
+    const result = await scanRepository({
+      ...base(),
+      mode: 'native-only',
+      changedOnly: true,
+      base: 'HEAD',
+    });
+    expect(result.adapters).toHaveLength(0);
+  });
+
+  const newOnly = {
+    failOn: { severity: ['low', 'medium', 'high', 'critical'], newFindingsOnly: true },
+  };
+
+  it('fails closed when --new-only has no baseline', async () => {
+    await expect(
+      scanRepository({ ...base(), mode: 'native-only', ...newOnly }),
+    ).rejects.toMatchObject({ exitCode: 2 });
+  });
+
+  it('applies --new-only against the local baseline without an explicit base', async () => {
+    const { createBaseline } = await import('@evident/regression');
+    const current = await scanRepository({ ...base(), mode: 'native-only' });
+    await createBaseline({ ...current, findings: [] }, join(fixture, '.evident'));
+    const result = await scanRepository({ ...base(), mode: 'native-only', ...newOnly });
+    expect(result.regression.some((item) => item.classification === 'NEW')).toBe(true);
+    expect(result.exitCode).toBe(1);
+  });
+});

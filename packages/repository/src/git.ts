@@ -39,15 +39,12 @@ export async function getGitMetadata(root: string): Promise<GitMetadata | undefi
 
 export async function getChangedFiles(root: string, base = 'HEAD~1'): Promise<string[]> {
   const git = simpleGit(root);
-  try {
-    if (!(await git.checkIsRepo())) return [];
-    const output = await git.diff(['--name-only', `${base}...HEAD`]);
-    return output
-      .split('\n')
-      .map((path) => path.trim())
-      .filter(Boolean)
-      .sort();
-  } catch {
-    return [];
-  }
+  // Throws when the base can't be resolved: an empty list would silently filter out every finding.
+  if (!(await git.checkIsRepo())) throw new Error('not a git repository');
+  const output = await git.diff(['--name-only', `${base}...HEAD`]);
+  return output
+    .split('\n')
+    .map((path) => path.trim())
+    .filter(Boolean)
+    .sort();
 }

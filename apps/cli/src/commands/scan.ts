@@ -1,9 +1,18 @@
 import { Command } from 'commander';
 import { terminalReporter } from '@evident/reporters';
 import type { ScanOptions } from '@evident/types';
+import { ExitCodeError } from '@evident/core';
 import { split } from './options.js';
 import { handleError } from './errors.js';
 import { runConfiguredScan } from './run-scan.js';
+
+function parseSeconds(value: string): number {
+  const seconds = Number(value);
+  if (!Number.isInteger(seconds) || seconds <= 0) {
+    throw new ExitCodeError('--timeout must be a positive whole number of seconds', 2);
+  }
+  return seconds;
+}
 
 export function createScanCommand(): Command {
   const cmd = new Command('scan')
@@ -20,7 +29,7 @@ export function createScanCommand(): Command {
     .option('--no-ai', 'Disable AI explanations')
     .option('--offline', 'Disable network access')
     .option('--changed-only', 'Only scan changed files')
-    .option('--timeout <seconds>', 'Per-tool timeout in seconds', parseInt)
+    .option('--timeout <seconds>', 'Per-tool timeout in seconds')
     .option('--native-only', 'Only run Evident-native rules (no external scanners)')
     .option('--ci', 'CI mode (no interactive prompts)')
     .option('--verbose', 'Verbose output')
@@ -41,12 +50,12 @@ export function createScanCommand(): Command {
           ci: opts.ci,
           offline: opts.offline,
           useAi: opts.ai !== false,
-          timeout: opts.timeout ? opts.timeout * 1000 : undefined,
+          timeout: opts.timeout ? parseSeconds(opts.timeout) * 1000 : undefined,
           logLevel: opts.quiet ? 'silent' : opts.verbose ? 'debug' : 'info',
         };
 
         if (opts.nativeOnly) options.mode = 'native-only';
-        if (opts.changedOnly) options.mode = 'changed-only';
+        if (opts.changedOnly) options.changedOnly = true;
 
         const result = await runConfiguredScan(options);
 

@@ -1,14 +1,9 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
-import { loadConfig } from '@evident/config';
+import { loadConfig, validateConfig } from '@evident/config';
 import { detectRepository, getChangedFiles, type RepositoryContext } from '@evident/repository';
 import type { AdapterContext, AdapterRunResult } from '@evident/adapters';
-import type {
-  AdapterRun,
-  EvidentFinding,
-  ScanOptions,
-  ScanResult,
-} from '@evident/types';
+import type { AdapterRun, EvidentFinding, ScanOptions, ScanResult } from '@evident/types';
 import type { RegressionItem } from '@evident/types';
 import { deduplicate } from '@evident/deduplicator';
 import { governanceRules, cicdRules, applicationSecurityRules, runRules } from '@evident/rules';
@@ -56,36 +51,36 @@ export async function scanRepository(
     overrides: options.configOverrides,
   });
 
-  if (options.profiles) config = { ...config, profiles: options.profiles };
-  if (options.frameworks) config = { ...config, frameworks: options.frameworks };
+  if (options.profiles) config = validateConfig({ ...config, profiles: options.profiles });
+  if (options.frameworks) config = validateConfig({ ...config, frameworks: options.frameworks });
   if (!options.frameworks) {
-    const profileFrameworks = config.profiles.filter((profile) =>
-      ['soc2', 'hipaa', 'owasp'].includes(profile.toLowerCase()),
+    const profileFrameworks = config.profiles.filter(
+      (profile): profile is 'soc2' => profile === 'soc2',
     );
     if (profileFrameworks.length > 0) {
-      config = {
+      config = validateConfig({
         ...config,
         frameworks: [...new Set([...config.frameworks, ...profileFrameworks])],
-      };
+      });
     }
   }
   if (options.formats) {
-    config = {
+    config = validateConfig({
       ...config,
-      reporting: { ...config.reporting, formats: options.formats as never },
-    };
+      reporting: { ...config.reporting, formats: options.formats },
+    });
   }
   if (options.outputDirectory) {
-    config = {
+    config = validateConfig({
       ...config,
       reporting: { ...config.reporting, outputDirectory: options.outputDirectory },
-    };
+    });
   }
   if (options.failOn) {
-    config = {
+    config = validateConfig({
       ...config,
       policy: { ...config.policy, failOn: { ...config.policy.failOn, ...options.failOn } },
-    };
+    });
   }
 
   let repository: RepositoryContext;
@@ -99,12 +94,24 @@ export async function scanRepository(
     );
   }
 
-  logger.info(`Detected ${repository.name}: ${repository.languages.join('/') || 'unknown'}, ${repository.frameworks.join('/') || 'no framework'}`);
+  logger.info(
+    `Detected ${repository.name}: ${repository.languages.join('/') || 'unknown'}, ${repository.frameworks.join('/') || 'no framework'}`,
+  );
 
-  const changedFiles = options.mode === 'changed-only'
-    ? await getChangedFiles(repository.root, options.base)
-    : undefined;
-  if (options.mode === 'changed-only') {
+  const changedOnly = options.changedOnly || options.mode === 'changed-only';
+  let changedFiles: string[] | undefined;
+  if (changedOnly) {
+    try {
+      changedFiles = await getChangedFiles(repository.root, options.base);
+    } catch (err) {
+      throw new ExitCodeError(
+        `Cannot determine changed files against '${options.base ?? 'HEAD~1'}': ${err instanceof Error ? err.message : String(err)}`,
+        EXIT.INVALID_CONFIG,
+        err,
+      );
+    }
+  }
+  if (changedOnly) {
     logger.info(`Changed-file scope: ${changedFiles?.length ?? 0} files`);
   }
 
@@ -144,7 +151,8 @@ export async function scanRepository(
     findings = findings.filter((finding) =>
       finding.locations.some((location) =>
         changedFiles.some(
-          (path) => path === location.path || path.startsWith(`${location.path.replace(/\/$/, '')}/`),
+          (path) =>
+            path === location.path || path.startsWith(`${location.path.replace(/\/$/, '')}/`),
         ),
       ),
     );
@@ -153,23 +161,27 @@ export async function scanRepository(
   const deduped = deduplicate(findings);
   findings = deduped.map((g) => g.primary);
 
-  const missingTools = adapters
-    .filter((a) => a.status === 'unavailable')
-    .map((a) => a.id);
+  const missingTools = adapters.filter((a) => a.status === 'unavailable').map((a) => a.id);
   const coverage: ScanResult['coverage'] = {
-    complete: missingTools.length === 0 && !adapters.some((a) => a.status === 'failed' || a.status === 'timed_out'),
+    complete:
+      missingTools.length === 0 &&
+      !adapters.some((a) => a.status === 'failed' || a.status === 'timed_out'),
     partial: missingTools.length > 0,
     missingTools,
   };
 
   const evidence = await discoverEvidence(repository);
-  const controls = config.frameworks.flatMap((fw) =>
-    evaluateControls(findings, evidence, fw),
-  );
+  const controls = config.frameworks.flatMap((fw) => evaluateControls(findings, evidence, fw));
 
   let regression = [] as RegressionItem[];
-  if (options.base) {
+  if (options.base || config.policy.failOn.newFindingsOnly) {
     const baseline = await loadBaseline(join(repository.root, '.evident'));
+    if (!baseline && config.policy.failOn.newFindingsOnly) {
+      throw new ExitCodeError(
+        'New-findings-only policy needs a baseline: run `evident baseline create` first.',
+        EXIT.INVALID_CONFIG,
+      );
+    }
     regression = classifyFindings(findings, baseline);
   }
 
@@ -223,7 +235,9 @@ async function writeReports(
         logger.info(`Wrote ${join(dir, 'report.sarif')}`);
       }
     } catch (err) {
-      logger.warn(`Failed to write ${format} report: ${err instanceof Error ? err.message : String(err)}`);
+      logger.warn(
+        `Failed to write ${format} report: ${err instanceof Error ? err.message : String(err)}`,
+      );
     }
   }
 }
