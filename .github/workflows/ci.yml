@@ -21,8 +21,6 @@ jobs:
           fetch-depth: 0
 
       - uses: pnpm/action-setup@v4
-        with:
-          version: 10
 
       - uses: actions/setup-node@v4
         with:
@@ -32,6 +30,9 @@ jobs:
       # Security: never execute repository package scripts during install.
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Format
+        run: pnpm format:check
 
       - name: Lint
         run: pnpm lint
